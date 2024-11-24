@@ -12,19 +12,26 @@ type Fingerprint interface {
 	// Enforce(event *trace.Event) bool // Will be implemented once the enforce mode is implemented
 }
 
-type ProcessFingerprint struct {
-	Cmd string
-	// FilesystemActivityFingerprint Fingerprint
-	// NetworkActivityFingerprint    Fingerprint
-	Children map[string]*ProcessFingerprint
+type Program struct {
+	Path string
+	Args []string
 }
 
-func NewProcessFingerprint(cmd string) *ProcessFingerprint {
+// TODO: Change to ProgramFingerprint
+type ProcessFingerprint struct {
+	Program *Program
+	// FilesystemActivityFingerprint Fingerprint
+	// NetworkActivityFingerprint    Fingerprint
+	// ExecutionFingerprint          Fingerprint
+	Children map[*Program]*ProcessFingerprint
+}
+
+func NewProcessFingerprint(program *Program) *ProcessFingerprint {
 	return &ProcessFingerprint{
-		Cmd: cmd,
+		Program: program,
 		// FilesystemActivityFingerprint: nil, // TODO: Implement
 		// NetworkActivityFingerprint:    nil, // TODO: Implement
-		Children: make(map[string]*ProcessFingerprint),
+		Children: make(map[*Program]*ProcessFingerprint),
 	}
 }
 

@@ -10,6 +10,7 @@ import (
 	lru "github.com/hashicorp/golang-lru/v2"
 )
 
+// TODO: Change to ProgramTreeFingerprint
 type ProcessTreeFingerprint struct {
 	processKeyToFingerprintCache *lru.Cache[uint32, *ProcessFingerprint]
 	rootProcessFingerprint       *ProcessFingerprint
@@ -36,12 +37,6 @@ func (processTreeFingeprint *ProcessTreeFingerprint) GetOrCreateNodeForEvent(pro
 	if ok {
 		return fingerprint, true
 	}
-
-	// TODO (draft code below high-level algorithm):
-	//  * Fetch _full_ process lineage (should be infrequent due to the cache)
-	//  * Check if process has an ancestory with the relevant command for the fingerprint
-	//    * If not, scrap it
-	//    * If so, traverse the process fingerprint tree with knowledge of the common ancestory process / fingerprint
 
 	// Fetch the full process lineage of the event's process
 	maxDepth := 25 // up to 5 ancestors + process itself
@@ -75,7 +70,7 @@ func (processTreeFingeprint *ProcessTreeFingerprint) GetOrCreateNodeForEvent(pro
 		}
 	}
 	if !isDescendantOfRootProcess {
-		return nil, false // TODO: Flag when fingerprint isn't retrieved or created
+		return nil, false
 	}
 
 	// Traverse the tree from the root process fingerprint, adding child process fingerprints if necessary along the way,
@@ -88,6 +83,11 @@ func (processTreeFingeprint *ProcessTreeFingerprint) GetOrCreateNodeForEvent(pro
 		if !ok {
 			childFingerprint := NewProcessFingerprint(childProcess.Info.Cmd)
 			parentFingerprint.AddChild(childFingerprint)
+			// It's possible that the key already exists in the cache, but a different program is not being run under the
+			// same process. In that case, a new program fingerprint should be created (a sibling of the previous program
+			// fingerprint in the tree), and the new fingerprint should be cached for the process key. Importantly, this
+			// is made possible by the process tree data source exposing enough process metadata to know the program the
+			// process is currently running.
 			processTreeFingeprint.processKeyToFingerprintCache.Add(childProcess.Info.EntityId, childFingerprint) // TODO: Should the process fingerprint be added to the cache if it's not the process in which the event occured?
 		}
 		parentFingerprint = childFingerprint
