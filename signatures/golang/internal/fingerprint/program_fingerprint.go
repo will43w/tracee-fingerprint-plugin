@@ -12,33 +12,26 @@ type Fingerprint interface {
 	// Enforce(event *trace.Event) bool // Will be implemented once the enforce mode is implemented
 }
 
-type Program struct {
-	Path string
-	Args []string
-}
-
 // TODO: Change to ProgramFingerprint
-type ProcessFingerprint struct {
-	Program *Program
+type ProgramFingerprint struct {
+	Program Program
 	// FilesystemActivityFingerprint Fingerprint
 	// NetworkActivityFingerprint    Fingerprint
 	// ExecutionFingerprint          Fingerprint
-	Children map[*Program]*ProcessFingerprint
 }
 
-func NewProcessFingerprint(program *Program) *ProcessFingerprint {
-	return &ProcessFingerprint{
+func NewProgramFingerprint(program Program) *ProgramFingerprint {
+	return &ProgramFingerprint{
 		Program: program,
 		// FilesystemActivityFingerprint: nil, // TODO: Implement
 		// NetworkActivityFingerprint:    nil, // TODO: Implement
-		Children: make(map[*Program]*ProcessFingerprint),
 	}
 }
 
-func (processFingerprint *ProcessFingerprint) Update(event *trace.Event) {
-	fingerprint, err := processFingerprint.route(event)
+func (programFingerprint *ProgramFingerprint) Update(event *trace.Event) {
+	fingerprint, err := programFingerprint.route(event)
 	if err != nil {
-		log.Printf("Error updating fingerprint for incoming event: %v - %v \n", event, err)
+		log.Printf("error updating fingerprint for incoming event: %v - %v \n", event, err)
 		return
 	}
 
@@ -46,8 +39,8 @@ func (processFingerprint *ProcessFingerprint) Update(event *trace.Event) {
 }
 
 // TODO: Benchmark and see if map is faster than scan
-func (processFingerprint *ProcessFingerprint) route(event *trace.Event) (Fingerprint, error) {
-	return nil, errors.New("Not implemented")
+func (programFingerprint *ProgramFingerprint) route(event *trace.Event) (Fingerprint, error) {
+	return nil, errors.New("not implemented")
 	// for _, eventSelector := range FilesystemActivityEvents {
 	// 	if eventSelector.Name == event.EventName {
 	// 		return processFingerprint.FilesystemActivityFingerprint, nil
@@ -61,8 +54,4 @@ func (processFingerprint *ProcessFingerprint) route(event *trace.Event) (Fingerp
 	// }
 
 	// return nil, errors.New("No fingerprint found to handle the incoming event")
-}
-
-func (processFingerprint *ProcessFingerprint) AddChild(childProcessFingerprint *ProcessFingerprint) {
-	processFingerprint.Children[childProcessFingerprint.Cmd] = childProcessFingerprint
 }

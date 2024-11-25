@@ -12,14 +12,14 @@ import (
 type Fingerprint struct {
 	cb                     detect.SignatureHandler
 	processTreeDataSource  detect.DataSource
-	processTreeFingerprint *fingerprint.ProcessTreeFingerprint
+	rootProgramFingerprint *fingerprint.RootProgramFingerprint
 }
 
 func (sig *Fingerprint) Init(ctx detect.SignatureContext) error {
 	sig.cb = ctx.Callback
 	processTreeDataSource, ok := ctx.GetDataSource("tracee", "process_tree")
 	if !ok {
-		return fmt.Errorf("Data source tracee/process_tree is not registered")
+		return fmt.Errorf("data source tracee/process_tree is not registered")
 	}
 
 	// TODO: Create server to supply configuration, mode, etc.
@@ -51,15 +51,15 @@ func (sig *Fingerprint) GetSelectedEvents() ([]detect.SignatureEventSelector, er
 func (sig *Fingerprint) OnEvent(event protocol.Event) error {
 	eventObj, ok := event.Payload.(trace.Event)
 	if !ok {
-		return fmt.Errorf("Invalid event - %v", event)
+		return fmt.Errorf("invalid event - %v", event)
 	}
 
-	processFingeprint, ok := sig.processTreeFingerprint.GetOrCreateNodeForEvent(sig.processTreeDataSource, &eventObj)
+	programFingeprint, ok := sig.rootProgramFingerprint.GetOrCreateProgramFingerprintForEvent(sig.processTreeDataSource, &eventObj)
 	if !ok {
 		return nil
 	}
 
-	processFingeprint.Update(&eventObj)
+	programFingeprint.Update(&eventObj)
 	return nil
 }
 
